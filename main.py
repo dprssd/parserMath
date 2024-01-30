@@ -29,24 +29,39 @@ class Main:
         for i in self.dbase.find(query, projection):
             print(i)
 
-    def calculate_linear_formula(self):
-        query, projection = {'name': 'test_formula'}, {'_id': 0}
+    def create_record(self):
+        name = input('Name: ')
+        formula = input('Formula: ')
+        a = int(input('How many times do you want to create variables? '))
+        variables = {}
+        for i in range(a):
+            print(i+1, '/', a)
+            keys = input('Keys: ')
+            values = input('Values: ')
+            variables[keys] = int(values)
+        self.dbase.create_record({'name': name, 'formula': formula, 'variables': variables})
+
+    def calculate_linear_formula(self, name):
+
+        query, projection = {'name': name}, {'_id': 0}
 
         for i in self.dbase.find(query, projection):
             formula = i['formula']
-            values = i['values']
-            print(f'Formula: {formula}, Values: {values}')
+            variables = i['variables']
+            print(f'Formula: {formula}, Values: {variables}')
 
-        my_parse = pyParseMath(formula, values)
+        my_parse = pyParseMath(formula, variables)
 
-        self.dbase.change_record('test_formula', 'out_value', my_parse.parse_and_evaluate_linear_formula())
+        self.dbase.change_record(name, 'out_value', my_parse.parse_and_evaluate_linear_formula())
 
 
 main = Main()
 choose = input('Input:')
 if choose == 'calc':
-    main.calculate_linear_formula()
+    main.calculate_linear_formula(name=input('Name: '))
 elif choose == 'hard_query':
     main.hard_query_find()
 elif choose == 'exec':
     dynamic_program_analysis()
+elif choose == 'create_record':
+    main.create_record()
