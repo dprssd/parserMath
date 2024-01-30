@@ -11,7 +11,7 @@ class MongoDB(object):
 
     def create_user(self, user: dict):
         try:
-            if self._collection.find_one({"username": user.get('username')}) == None:
+            if self._collection.find_one({"username": user.get('username')}) is None:
                 self._collection.insert_one(user)
                 print(f"Added New user: {user.get('username')}")
             else:
@@ -54,4 +54,43 @@ class MongoDB(object):
             self._collection.insert_one(rec)
         except Exception as ex:
             print("[create_record] Some problem...")
+            print(ex)
+
+    def find_by_name(self, name: str):
+        try:
+            data = self._collection.find_one({"name": name})
+            print("Get record by name")
+            return data
+        except Exception as ex:
+            print("[find_by_name] Some problem...")
+            print(ex)
+
+    def find(self, query, projection):
+        try:
+            data = self._collection.find(query, projection)
+            print(data)
+            print("Get all records")
+            return data
+        except Exception as ex:
+            print("[find] Some problem...")
+            print(ex)
+
+    def change_record(self, name: str, key: str, value: str):
+        try:
+            if self._collection.find_one({"name": name}) is not None:
+                self._collection.update_one({"name": name}, {"$set": {key: value}})
+            else:
+                print(f'Record: {name} not find')
+        except Exception as ex:
+            print("[change_record] Some problem...")
+            print(ex)
+
+    def delete_record(self, id_rec: str):
+        try:
+            if self._collection.find_one({"_id": id_rec}) is not None:
+                self._collection.delete_one({"_id": id_rec})
+            else:
+                print(f'Record: {id_rec} not find')
+        except Exception as ex:
+            print("[delete_record] Some problem...")
             print(ex)

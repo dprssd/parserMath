@@ -7,8 +7,6 @@ class pyParseMath:
     def __init__(self, formula, values):
         self.formula = formula
         self.values = values
-        print(self.values)
-        print(self.formula)
 
     def evaluate_formula(self):
         return eval(self.formula, self.values)

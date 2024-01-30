@@ -1,19 +1,52 @@
 from pymongoAPI import MongoDB
 from parseMath import pyParseMath
 
-dbase = MongoDB(host='localhost', port=27017, db_name='test', collection='math')
 
-# dbase.create_record({'_id': 3, '_name': 'fake_formula', 'formula': '2*x^2 + 3*x - 1 ='})
-
-result = dbase.get_all_users()
-for i in result:
-    print(i)
+# dbase.create_record({'_id': 4, 'name': 'test_formula', 'formula': '2*x^2+3*x - 1', 'values': {'x': 2}})
+# dbase.change_record('test_formula', 'out_value', 2)
+def dynamic_program_analysis():
+    exec(input('exec: '))
 
 
+class Main:
 
-formula = 'Ta + (Ia / (k0 + k1 * Vw))'
-values = {"Ta": 10, "Ia": 10, "k0": 30.02, "k1": 6.28, "Vw": 10}
+    def __init__(self):
+        self.dbase = MongoDB(host='localhost', port=27017, db_name='test', collection='math')
 
-my_parse = pyParseMath(formula, values)
-my_parse.parse_and_evaluate_linear_formula()
-print(result)
+    def hard_query_find(self):
+        query, projection = {}, {}
+        keys_q = input('Keys for query: ')
+        value_q = input('Value for query: ')
+        query[keys_q] = value_q
+
+        for i in range(int(input('How many times do you want to projection? '))):
+            keys_p = input('Keys for projection: ')
+            if input('Type of projection (int/str): ') == 'int':
+                value_p = int(input('Value for projection: '))
+            else:
+                value_p = input('Value for projection: ')
+            projection[keys_p] = value_p
+        for i in self.dbase.find(query, projection):
+            print(i)
+
+    def calculate_linear_formula(self):
+        query, projection = {'name': 'test_formula'}, {'_id': 0}
+
+        for i in self.dbase.find(query, projection):
+            formula = i['formula']
+            values = i['values']
+            print(f'Formula: {formula}, Values: {values}')
+
+        my_parse = pyParseMath(formula, values)
+
+        self.dbase.change_record('test_formula', 'out_value', my_parse.parse_and_evaluate_linear_formula())
+
+
+main = Main()
+choose = input('Input:')
+if choose == 'calc':
+    main.calculate_linear_formula()
+elif choose == 'hard_query':
+    main.hard_query_find()
+elif choose == 'exec':
+    dynamic_program_analysis()
