@@ -1,23 +1,26 @@
 import ast
 from scipy.integrate import quad
 
-class pyParseMath(object):
 
-    def __init__(self):
-        pass
+class pyParseMath:
 
-    def evaluate_formula(self, formula, values):
-        return eval(formula, values)
+    def __init__(self, formula, values):
+        self.formula = formula
+        self.values = values
+        print(self.values)
+        print(self.formula)
 
-    def parse_and_evaluate_linear_formula(input_formula, input_values):
+    def evaluate_formula(self):
+        return eval(self.formula, self.values)
+
+    def parse_and_evaluate_linear_formula(self):
         try:
-            parsed_formula = ast.parse(input_formula, mode='eval')
+            parsed_formula = ast.parse(self.formula, mode='eval')
 
             if isinstance(parsed_formula, ast.Expression):
-
                 compiled_formula = compile(parsed_formula, filename='<ast>', mode='eval')
-                result = eval(compiled_formula, input_values)
-
+                result = eval(compiled_formula, self.values)
+                print(result)
                 return result
             else:
                 return "Формула не является корректным выражением"
