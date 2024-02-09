@@ -6,6 +6,9 @@ from pymongo import MongoClient
 class InputWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.input_label = None
+        self.input_field = None
+        self.ok_button = None
         self.initUI()
         self.client = MongoClient('localhost', 27017)
         self.db = self.client['test']
@@ -26,7 +29,7 @@ class InputWindow(QWidget):
 
         self.setLayout(layout)
 
-        self.setWindowTitle('Окно с полем для ввода и кнопкой')
+        self.setWindowTitle('Добавить новую запись')
         self.show()
 
     def on_ok_button_click(self):
