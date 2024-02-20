@@ -2,6 +2,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLineEdit, QLabel, QPushButton
 from pymongo import MongoClient
 
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLineEdit, QLabel, QPushButton
+
 
 class InputWindow(QWidget):
     def __init__(self):
@@ -24,7 +26,7 @@ class InputWindow(QWidget):
         layout.addWidget(self.input_field)
 
         self.ok_button = QPushButton('OK')
-        self.ok_button.clicked.connect(self.on_ok_button_click)
+        self.ok_button.clicked.connect(self.on_ok_button_clicked)
         layout.addWidget(self.ok_button)
 
         self.setLayout(layout)
@@ -32,12 +34,12 @@ class InputWindow(QWidget):
         self.setWindowTitle('Добавить новую запись')
         self.show()
 
-    def on_ok_button_click(self):
-        print('clicked')
+    def on_ok_button_clicked(self):
         input_text = self.input_field.text()
         try:
             # self.collection.create_index(["name"], unique=True)
             self.collection.insert_one({'name': input_text, 'formula': '', 'variables': '', 'out_value': ''})
+            super().load_combobox()
             self.close()
         except Exception as ex:
             print("[create_record] Some problem...")
