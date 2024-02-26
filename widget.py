@@ -1,6 +1,7 @@
 import sys
 import ast
 import mainWindow
+from parseMath import pyParseMath
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QMessageBox, QComboBox
 from bson.objectid import ObjectId
@@ -12,12 +13,14 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
+        self.parseMath = pyParseMath()
         self.client = MongoClient('localhost', 27017)
         self.db = self.client['test']
         self.collection = self.db['math']
         self.y = False
         self.table_change = False
         self.name = ''
+        self.table_data = []
         self.setupUi(self)
         self.tableWidget.setHorizontalHeaderLabels(['Key', 'Value', 'Type', 'Delete'])
         self.tableWidget.resizeColumnsToContents()
@@ -25,6 +28,8 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         self.name_comboBox.currentTextChanged.connect(self.click_combobox)
         self.delBtn.clicked.connect(self.delete_record)
         self.saveBtn.clicked.connect(self.save_record)
+        self.searchVarBtn.clicked.connect(self.search_variables)
+        self.calcBtn.clicked.connect(self.calc_formula)
         self.input_window = None
         self.addBtn.clicked.connect(self.open_input_window)
         self.load_combobox()
@@ -55,21 +60,7 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
                 self.tableWidget.insertRow(rowPosition)
                 self.tableWidget.setItem(rowPosition, 0, QtWidgets.QTableWidgetItem(str(key)))
                 self.tableWidget.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(str(value)))
-
-                if isinstance(value, ObjectId):
-                    cell_widget = QtWidgets.QTableWidgetItem(str(type(value)))
-                    self.tableWidget.setItem(rowPosition, 2, cell_widget)
-                    for column in range(3):
-                        item = self.tableWidget.item(rowPosition, column)
-                        if item is not None:
-                            item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
-
-                else:
-                    self.add_combobox_table(rowPosition, value)
-
-                    if str(key) == 'name':
-                        self.tableWidget.item(rowPosition, 0).setFlags(
-                            self.tableWidget.item(rowPosition, 0).flags() & ~QtCore.Qt.ItemIsEditable)
+                self.type_value(value, rowPosition, key)
 
         self.add_button_table()
         self.add_button_delete()
@@ -77,17 +68,34 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         self.saveBtn.setEnabled(False)
         self.name = self.name_comboBox.currentText()
 
+    def type_value(self, value, rowPosition, key):
+        if isinstance(value, ObjectId):
+            cell_widget = QtWidgets.QTableWidgetItem(str(type(value)))
+            self.tableWidget.setItem(rowPosition, 2, cell_widget)
+            for column in range(3):
+                item = self.tableWidget.item(rowPosition, column)
+                if item is not None:
+                    item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        else:
+            self.add_combobox_table(rowPosition, value)
+            if str(key) == 'name':
+                self.tableWidget.item(rowPosition, 0).setFlags(
+                    self.tableWidget.item(rowPosition, 0).flags() & ~QtCore.Qt.ItemIsEditable)
+
     def add_combobox_table(self, rowPosition, value):
         combo_box = QtWidgets.QComboBox()
         combo_box.addItem("<class 'int'>")
         combo_box.addItem("<class 'str'>")
+        combo_box.addItem("<class 'list'>")
         combo_box.addItem("<class 'dict'>")
         if isinstance(value, int):
             combo_box.setCurrentIndex(0)
         elif isinstance(value, str):
             combo_box.setCurrentIndex(1)
-        elif isinstance(value, dict):
+        elif isinstance(value, list):
             combo_box.setCurrentIndex(2)
+        elif isinstance(value, dict):
+            combo_box.setCurrentIndex(3)
         self.tableWidget.setCellWidget(rowPosition, 2, combo_box)
 
     def add_button_table(self):
@@ -113,11 +121,15 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         for i in range(rowPosition):
             if self.tableWidget.item(i, 0).text() != 'name' and self.tableWidget.item(i, 0).text() != '_id':
                 pushButton = QtWidgets.QPushButton(f'del')
-                pushButton.clicked.connect(lambda ch, i=i: self.tableWidget.removeRow(i))
+                pushButton.clicked.connect(lambda ch, j=i: self.del_btn_line(j))
                 self.tableWidget.setCellWidget(i, 3, pushButton)
 
-    def click_combobox(self):
+    def del_btn_line(self, i):
+        self.tableWidget.removeRow(i)
+        self.buffer_table()
+        self.enter_from_buffer()
 
+    def click_combobox(self):
         if self.table_change:
             reply = QMessageBox.question(self, 'Сохранение', 'Are you sure?', QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.Yes:
@@ -136,7 +148,6 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         self.input_window = InputWindow()
         self.input_window.setWindowModality(QtCore.Qt.ApplicationModal)
         self.load_combobox()
-
         if self.input_window.exec_() == QtWidgets.QDialog.Accepted:
             self.load_combobox()
 
@@ -159,51 +170,15 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
             self.load_combobox()
 
     def save_record(self):
-
         data = {}
-
         for row in range(self.tableWidget.rowCount() - 1):
             key = self.tableWidget.item(row, 0).text()
             value = self.tableWidget.item(row, 1).text()
-            cell_widget = self.tableWidget.cellWidget(row, 2)
-            if isinstance(cell_widget, QComboBox):
-                value_type = cell_widget.currentText()
-            else:
-                value_type = self.tableWidget.item(row, 2).text()
-
-            if value_type == "<class 'bson.objectid.ObjectId'>":
-                try:
-                    value = ObjectId(value)
-                except ValueError:
-                    QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class "
-                                                                  f"'bson.objectid.ObjectId'>.")
-                    return
-
-            elif value_type == "<class 'int'>":
-                try:
-                    value = int(value)
-                except ValueError:
-                    QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class 'int'>.")
-                    return
-            elif value_type == "<class 'str'>":
-                try:
-                    value = str(value)
-
-                except ValueError:
-                    QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class'str'>.")
-                    return
-
-            elif value_type == "<class 'dict'>":
-                try:
-                    value = ast.literal_eval(value)
-                except ValueError:
-                    QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class 'dict'>.")
-                    return
-
+            value = self.check_value(value, row)
             data[key] = value
         try:
             self.collection.replace_one({"name": self.name}, data, upsert=True)
-        except Exception as e:
+        except Exception:
             QtWidgets.QMessageBox.warning(self, "Ошибка", f"Такое name есть!")
             return
 
@@ -214,6 +189,115 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
 
         self.enter_key_value(str(self.name_comboBox.currentText()))
         self.load_combobox()
+
+    def check_value(self, value, row):
+        cell_widget = self.tableWidget.cellWidget(row, 2)
+        if isinstance(cell_widget, QComboBox):
+            value_type = cell_widget.currentText()
+        else:
+            value_type = self.tableWidget.item(row, 2).text()
+
+        if value_type == "<class 'bson.objectid.ObjectId'>":
+            try:
+                value = ObjectId(value)
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class "
+                                                              f"'bson.objectid.ObjectId'>.")
+                return
+        elif value_type == "<class 'int'>":
+            try:
+                value = int(value)
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class 'int'>.")
+                return
+        elif value_type == "<class 'str'>":
+            try:
+                value = str(value)
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class'str'>.")
+                return
+        elif value_type == "<class 'list'>":
+            try:
+                value = eval(value)
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class 'list'>.")
+                return
+        elif value_type == "<class 'dict'>":
+            try:
+                value = ast.literal_eval(value)
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class 'dict'>.")
+                return
+        return value
+
+    def buffer_table(self):
+        self.table_data = []
+        for row in range(self.tableWidget.rowCount() - 1):
+            key = self.tableWidget.item(row, 0).text()
+            value = self.tableWidget.item(row, 1).text()
+            value = self.check_value(value, row)
+            self.table_data.append([key, value])
+
+    def enter_from_buffer(self):
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+        for row in self.table_data:
+            rowPosition = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(self.tableWidget.rowCount())
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QtWidgets.QTableWidgetItem(str(row[0])))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QtWidgets.QTableWidgetItem(str(row[1])))
+            self.type_value(row[1], rowPosition, row[0])
+        self.add_button_table()
+        self.add_button_delete()
+
+    def search_variables(self):
+        var_list = []
+        for row in range(self.tableWidget.rowCount() - 1):
+            key = self.tableWidget.item(row, 0).text()
+            value = self.tableWidget.item(row, 1).text()
+            if key == 'formula':
+
+                var_list = self.parseMath.search_variables(value)
+                if var_list:
+                    break
+
+        for row in range(self.tableWidget.rowCount() - 1):
+            key = self.tableWidget.item(row, 0).text()
+            if key == 'variables_list':
+                self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(str(var_list)))
+                self.add_combobox_table(row, var_list)
+                break
+
+    def calc_formula(self):
+        var_dict = None
+        const_dict = None
+        formula = None
+        out = None
+        all_dict = {}
+        for row in range(self.tableWidget.rowCount() - 1):
+            key = self.tableWidget.item(row, 0).text()
+            value = self.tableWidget.item(row, 1).text()
+            if key == 'variables':
+                var_dict = ast.literal_eval(value)
+                print(var_dict)
+            elif key == 'const':
+                const_dict = ast.literal_eval(value)
+                print(const_dict)
+            elif key == 'formula':
+                formula = value
+                print(formula)
+
+        if var_dict is not None and const_dict is not None and formula is not None:
+            all_dict = {**var_dict, **const_dict}
+            print(formula, all_dict)
+            out = self.parseMath.parse_and_evaluate_linear_formula(formula, all_dict)
+
+        if out is not None:
+            for row in range(self.tableWidget.rowCount() - 1):
+                key = self.tableWidget.item(row, 0).text()
+                if key == 'out_value':
+                    self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(str(out)))
+                    self.add_combobox_table(row, out)
 
 
 def main():
