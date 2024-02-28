@@ -9,10 +9,6 @@ class pyParseMath:
         pass
     #     self.formula = formula
     #     self.values = values
-    #
-
-    def evaluate_formula(self):
-        return eval(formula, svalues)
 
     def parse_and_evaluate_linear_formula(self, formula, values):
         try:
@@ -20,10 +16,7 @@ class pyParseMath:
 
             if isinstance(parsed_formula, ast.Expression):
                 compiled_formula = compile(parsed_formula, filename='<ast>', mode='eval')
-                print(values)
-                print(formula)
                 result = eval(compiled_formula, values)
-                print(result)
                 return result
             else:
                 return "Формула не является корректным выражением"

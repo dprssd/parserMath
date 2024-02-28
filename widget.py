@@ -1,9 +1,11 @@
 import sys
 import ast
 import mainWindow
+import pandas as pd
+import os
 from parseMath import pyParseMath
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QMessageBox, QComboBox
+from PyQt5.QtWidgets import QMessageBox, QComboBox, QFileDialog
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from inputWin import InputWindow
@@ -30,10 +32,13 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         self.saveBtn.clicked.connect(self.save_record)
         self.searchVarBtn.clicked.connect(self.search_variables)
         self.calcBtn.clicked.connect(self.calc_formula)
+        self.pathSearchDataSet.clicked.connect(self.searchPath)
+        self.openDataSet.clicked.connect(self.openDataSetFromPath)
         self.input_window = None
         self.addBtn.clicked.connect(self.open_input_window)
         self.load_combobox()
 
+    # Tab_1--------------------------------------------------------------------------------------------------------------
     def load_combobox(self):
         current_text = ''
         all_documents = self.collection.find()
@@ -218,7 +223,12 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
                 return
         elif value_type == "<class 'list'>":
             try:
-                value = eval(value)
+                if value != '':
+                    value = eval(value)
+                else:
+                    QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' "
+                                                                  f"должно быть <class 'list'> и не пустым.")
+                    return
             except ValueError:
                 QtWidgets.QMessageBox.warning(self, "Ошибка", f"Значение '{value}' должно быть <class 'list'>.")
                 return
@@ -273,7 +283,6 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         const_dict = None
         formula = None
         out = None
-        all_dict = {}
         for row in range(self.tableWidget.rowCount() - 1):
             key = self.tableWidget.item(row, 0).text()
             value = self.tableWidget.item(row, 1).text()
@@ -298,6 +307,50 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
                 if key == 'out_value':
                     self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(str(out)))
                     self.add_combobox_table(row, out)
+
+    # Tab_2-------------------------------------------------------------------------------------------------------------
+    def searchPath(self):
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFiles)
+        file_dialog.setNameFilter("Файлы Excel (*.xlsx);;Файлы CSV (*.csv)")
+
+        if file_dialog.exec_() == QFileDialog.Accepted:
+            selected_files = file_dialog.selectedFiles()
+            for file in selected_files:
+                self.linePath.setText(file)
+
+    def openDataSetFromPath(self):
+        file_path = self.linePath.text()
+        try:
+            if file_path.endswith('.csv'):
+                dataset = pd.read_csv(file_path)
+                self.populate_table(dataset)
+            elif file_path.endswith('.xlsx'):
+                dataset = pd.read_excel(file_path)
+            else:
+                print("Неподдерживаемый формат файла.")
+                return None
+
+            # Дополнительные действия с открытым датасетом
+            print(f"Датасет {file_path} успешно открыт.")
+            return None
+        except FileNotFoundError:
+            print(f"Файл {file_path} не найден.")
+            return None
+        except pd.errors.ParserError:
+            print(f"Не удалось прочитать файл {file_path}. Проверьте формат данных.")
+            return None
+
+    def populate_table(self, data):
+        self.tableDataSet.setRowCount(data.shape[0])
+        self.tableDataSet.setColumnCount(data.shape[1])
+
+        self.tableDataSet.setItem(1, 1, QtWidgets.QTableWidgetItem(str(1)))
+        print(data)
+        for row in range(data.shape[0]):
+            for col in range(data.shape[1]):
+                print(str(data.iloc[row, col]))
+                self.tableDataSet.setItem(1, 0, QtWidgets.QTableWidgetItem(str(data.iloc[1, 1])))
 
 
 def main():

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainWindow.ui'
+# Form implementation generated from reading ui file 'MainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.10
 #
@@ -48,6 +48,31 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
+        self.verticalLayoutWidget = QtWidgets.QWidget(self.tab_2)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 821, 321))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setSizeConstraint(QtWidgets.QLayout.SetNoConstraint)
+        self.horizontalLayout.setSpacing(0)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.linePath = QtWidgets.QLineEdit(self.verticalLayoutWidget)
+        self.linePath.setObjectName("linePath")
+        self.horizontalLayout.addWidget(self.linePath)
+        self.pathSearchDataSet = QtWidgets.QPushButton(self.verticalLayoutWidget)
+        self.pathSearchDataSet.setObjectName("pathSearchDataSet")
+        self.horizontalLayout.addWidget(self.pathSearchDataSet)
+        self.openDataSet = QtWidgets.QPushButton(self.verticalLayoutWidget)
+        self.openDataSet.setObjectName("openDataSet")
+        self.horizontalLayout.addWidget(self.openDataSet)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.tableDataSet = QtWidgets.QTableWidget(self.verticalLayoutWidget)
+        self.tableDataSet.setObjectName("tableDataSet")
+        self.tableDataSet.setColumnCount(0)
+        self.tableDataSet.setRowCount(0)
+        self.verticalLayout.addWidget(self.tableDataSet)
         self.tabWidget.addTab(self.tab_2, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -59,7 +84,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -71,4 +96,6 @@ class Ui_MainWindow(object):
         self.calcBtn.setText(_translate("MainWindow", "Расчитать"))
         self.searchVarBtn.setText(_translate("MainWindow", "Найти переменные"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "DataBase"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Tab 2"))
+        self.pathSearchDataSet.setText(_translate("MainWindow", "..."))
+        self.openDataSet.setText(_translate("MainWindow", "Открыть"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "DataSetMaster"))
