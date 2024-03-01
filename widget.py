@@ -344,13 +344,13 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
     def populate_table(self, data):
         self.tableDataSet.setRowCount(data.shape[0])
         self.tableDataSet.setColumnCount(data.shape[1])
-
-        self.tableDataSet.setItem(1, 1, QtWidgets.QTableWidgetItem(str(1)))
+        column_names = data.columns.tolist()
+        self.tableDataSet.setColumnCount(len(column_names))
+        self.tableDataSet.setHorizontalHeaderLabels(column_names)
         print(data)
         for row in range(data.shape[0]):
             for col in range(data.shape[1]):
-                print(str(data.iloc[row, col]))
-                self.tableDataSet.setItem(1, 0, QtWidgets.QTableWidgetItem(str(data.iloc[1, 1])))
+                self.tableDataSet.setItem(row, col, QtWidgets.QTableWidgetItem(str(data.iloc[row, col])))
 
 
 def main():
