@@ -49,7 +49,7 @@ class Ui_MainWindow(object):
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
         self.verticalLayoutWidget = QtWidgets.QWidget(self.tab_2)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 821, 321))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 821, 351))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -73,6 +73,14 @@ class Ui_MainWindow(object):
         self.tableDataSet.setColumnCount(0)
         self.tableDataSet.setRowCount(0)
         self.verticalLayout.addWidget(self.tableDataSet)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_3.addItem(spacerItem)
+        self.pushButton = QtWidgets.QPushButton(self.verticalLayoutWidget)
+        self.pushButton.setObjectName("pushButton")
+        self.horizontalLayout_3.addWidget(self.pushButton)
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
         self.tabWidget.addTab(self.tab_2, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -84,7 +92,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -98,4 +106,5 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "DataBase"))
         self.pathSearchDataSet.setText(_translate("MainWindow", "..."))
         self.openDataSet.setText(_translate("MainWindow", "Открыть"))
+        self.pushButton.setText(_translate("MainWindow", "Сохранить"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "DataSetMaster"))

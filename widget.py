@@ -312,7 +312,7 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
     def searchPath(self):
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_dialog.setNameFilter("Файлы Excel (*.xlsx);;Файлы CSV (*.csv)")
+        file_dialog.setNameFilter("Файлы CSV (*.csv);;Файлы Excel (*.xlsx)")
 
         if file_dialog.exec_() == QFileDialog.Accepted:
             selected_files = file_dialog.selectedFiles()
@@ -324,14 +324,14 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         try:
             if file_path.endswith('.csv'):
                 dataset = pd.read_csv(file_path)
-                self.populate_table(dataset)
+
             elif file_path.endswith('.xlsx'):
                 dataset = pd.read_excel(file_path)
             else:
                 print("Неподдерживаемый формат файла.")
                 return None
 
-            # Дополнительные действия с открытым датасетом
+            self.populate_table(dataset)
             print(f"Датасет {file_path} успешно открыт.")
             return None
         except FileNotFoundError:
@@ -342,14 +342,81 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
             return None
 
     def populate_table(self, data):
+
+        progress_dialog = QtWidgets.QProgressDialog("Loading...", "Прервать", 0, data.shape[0] * data.shape[1], self)
+        progress_dialog.setWindowModality(QtCore.Qt.WindowModal)
+        progress_dialog.setWindowTitle("Loading Data")
+        progress_dialog.setMinimumDuration(0)
+
         self.tableDataSet.setRowCount(data.shape[0])
         self.tableDataSet.setColumnCount(data.shape[1])
         column_names = data.columns.tolist()
         self.tableDataSet.setColumnCount(len(column_names))
         self.tableDataSet.setHorizontalHeaderLabels(column_names)
+
         for row in range(data.shape[0]):
             for col in range(data.shape[1]):
-                self.tableDataSet.setItem(row, col, QtWidgets.QTableWidgetItem(str(data.iloc[row, col])))
+                if progress_dialog.wasCanceled():
+                    return
+                item = QtWidgets.QTableWidgetItem(str(data.iloc[row, col]))
+                self.tableDataSet.setItem(row, col, item)
+                progress_dialog.setValue(progress_dialog.value() + 1)
+                QtWidgets.QApplication.processEvents()
+
+        progress_dialog.close()
+
+    def cancel_loading(self):
+        self.tableDataSet.clear()
+
+    def save_dataset(self):
+        file_dialog = QtWidgets.QFileDialog(self)
+        file_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        file_dialog.setNameFilter("CSV (*.csv);;Excel (*.xlsx)")
+        file_dialog.setDefaultSuffix("csv")
+
+        if file_dialog.exec_() == QtWidgets.QDialog.Accepted:
+            file_path = file_dialog.selectedFiles()[0]
+            selected_filter = file_dialog.selectedFilter()
+            if selected_filter == "CSV (*.csv)":
+                rows = self.tableDataSet.rowCount()
+                columns = self.tableDataSet.columnCount()
+
+                data = []
+
+                for row in range(rows):
+                    row_data = []
+                    for col in range(columns):
+                        item = self.tableDataSet.item(row, col)
+                        if item is not None:
+                            row_data.append(item.text())
+                        else:
+                            row_data.append(None)
+                    data.append(row_data)
+                df = pd.DataFrame(data)
+                df.to_csv(file_path, index=False)
+                print("Набор данных сохранен в формате CSV по пути:", file_path)
+
+            elif selected_filter == "Excel (*.xlsx)":
+                df = pd.DataFrame()
+
+                rows = self.tableDataSet.rowCount()
+                columns = self.tableDataSet.columnCount()
+
+                for row in range(rows):
+                    for col in range(columns):
+                        item = self.tableDataSet.item(row, col)
+                        if item is not None:
+                            value = item.text()
+                            try:
+                                value = int(value)
+                            except ValueError:
+                                try:
+                                    value = float(value)
+                                except ValueError:
+                                    pass
+                            df.loc[row, col] = value
+                df.to_excel(file_path, index=False)
+                print("Набор данных сохранен в формате Excel по пути:", file_path)
 
 
 def main():
