@@ -44,13 +44,18 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         all_documents = self.collection.find()
         if self.name_comboBox != '':
             current_text = self.name_comboBox.currentText()
+        if self.formulaComboBox != '':
+            current_text = self.formulaComboBox.currentText()
 
         items = [str(document['name']) for document in all_documents]
 
         self.name_comboBox.clear()
+        self.formulaComboBox.clear()
         self.name_comboBox.addItems(items)
+        self.formulaComboBox.addItems(items)
         if current_text != '':
             self.name_comboBox.setCurrentText(current_text)
+            self.formulaComboBox.setCurrentText(current_text)
 
     def enter_key_value(self, name_document):
 
@@ -81,6 +86,14 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
                 item = self.tableWidget.item(rowPosition, column)
                 if item is not None:
                     item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        elif str(key) == 'lang':
+            self.tableWidget.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem("<class 'str'>"))
+            self.add_lang_choice(rowPosition)
+            self.tableWidget.item(rowPosition, 0).setFlags(
+                self.tableWidget.item(rowPosition, 0).flags() & ~QtCore.Qt.ItemIsEditable)
+            self.tableWidget.item(rowPosition, 2).setFlags(
+                self.tableWidget.item(rowPosition, 2).flags() & ~QtCore.Qt.ItemIsEditable)
+
         else:
             self.add_combobox_table(rowPosition, value)
             if str(key) == 'name':
@@ -124,7 +137,9 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
         rowPosition = self.tableWidget.rowCount() - 1
         self.saveBtn.setEnabled(True)
         for i in range(rowPosition):
-            if self.tableWidget.item(i, 0).text() != 'name' and self.tableWidget.item(i, 0).text() != '_id':
+            if (self.tableWidget.item(i, 0).text() != 'name' and
+                    self.tableWidget.item(i, 0).text() != '_id' and
+                    self.tableWidget.item(i, 0).text() != 'lang'):
                 pushButton = QtWidgets.QPushButton(f'del')
                 pushButton.clicked.connect(lambda ch, j=i: self.del_btn_line(j))
                 self.tableWidget.setCellWidget(i, 3, pushButton)
@@ -165,10 +180,8 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
             pass
 
     def delete_record(self):
-
         name_document = self.name_comboBox.currentText()
         self.showDialog()
-
         if self.y:
             self.collection.delete_one({"name": name_document})
             self.name_comboBox.clear()
@@ -277,6 +290,12 @@ class mainWin(QtWidgets.QMainWindow, mainWindow.Ui_MainWindow):
                 self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(str(var_list)))
                 self.add_combobox_table(row, var_list)
                 break
+
+    def add_lang_choice(self, rowPosition):
+        combo_box_lang = QtWidgets.QComboBox()
+        combo_box_lang.addItem("default")
+        combo_box_lang.addItem("LaTeX")
+        self.tableWidget.setCellWidget(rowPosition, 1, combo_box_lang)
 
     def calc_formula(self):
         var_dict = None

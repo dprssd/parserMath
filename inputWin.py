@@ -31,8 +31,9 @@ class InputWindow(QtWidgets.QDialog):
 
         input_text = self.name_input.text()
         try:
-            self.collection.insert_one({'name': input_text, 'formula': '', 'variables_list': '', 'const': '',
-                                        f'variables': '', 'out_value': ''})
+            self.collection.insert_one(
+                {'name': input_text, 'lang': '', 'formula': '', 'variables_list': '', 'const': '',
+                 f'variables': '', 'out_value': ''})
         except Exception as ex:
             print("[create_record] Some problem...")
             QtWidgets.QMessageBox.warning(self, "Ошибка", f"Такое name есть!")
